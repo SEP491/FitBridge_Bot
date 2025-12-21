@@ -32,7 +32,6 @@ def load_env():
         print(f"--- Infrastructure: Force Loading .env from {env_path} ---")
         dotenv.load_dotenv(env_path, override=True)
         
-        # Explicitly pull from .env to ensure os.environ is populated
         for key in [
             "LANGSMITH_API_KEY", "OPENAI_API_KEY", "GOOGLE_API_KEY", 
             "NEO4J_URI", "NEO4J_USERNAME", "NEO4J_PASSWORD", 
@@ -56,7 +55,6 @@ def get_embeddings() -> OpenAIEmbeddings:
     """Get the loaded embeddings model (lazy loaded)."""
     global _EMBEDDINGS
     if _EMBEDDINGS is None:
-        load_env()
         _EMBEDDINGS = OpenAIEmbeddings(model="text-embedding-3-large")
         logger.info("OpenAI embeddings loaded successfully.")
     return _EMBEDDINGS
@@ -65,7 +63,6 @@ def get_model() -> ChatOpenAI:
     """Get the loaded language model (lazy loaded)."""
     global _MODEL
     if _MODEL is None:
-        load_env()
         _MODEL = ChatOpenAI(
             model="gpt-4o-mini",
             temperature=0.3,
@@ -77,7 +74,6 @@ def get_graph() -> Neo4jGraph:
     """Get the loaded graph database (lazy loaded)."""
     global _GRAPH
     if _GRAPH is None:
-        load_env()
         _GRAPH = Neo4jGraph(
             url=os.environ.get("NEO4J_URI"),
             username=os.environ.get("NEO4J_USERNAME"),
@@ -90,7 +86,6 @@ def get_PtCertificateVectorIndex() -> Neo4jVector:
     """Get the loaded PtCertificate vector index (lazy loaded)."""
     global _PtCertificateVectorIndex
     if _PtCertificateVectorIndex is None:
-        load_env()
         graph = get_graph()
         embeddings = get_embeddings()
         _PtCertificateVectorIndex = Neo4jVector.from_existing_graph(
@@ -108,7 +103,6 @@ def get_GymAssetVectorIndex() -> Neo4jVector:
     """Get the loaded GymAsset vector index (lazy loaded)."""
     global _GymAssetVectorIndex
     if _GymAssetVectorIndex is None:
-        load_env()
         graph = get_graph()
         embeddings = get_embeddings()
         _GymAssetVectorIndex = Neo4jVector.from_existing_graph(
@@ -126,7 +120,6 @@ def get_google_maps_client() -> googlemaps.Client:
     """Get the loaded Google Maps client (lazy loaded)."""
     global _GOOGLE_MAPS_CLIENT
     if _GOOGLE_MAPS_CLIENT is None:
-        load_env()
         _GOOGLE_MAPS_CLIENT = googlemaps.Client(key=os.environ.get("GOOGLE_MAPS_API_KEY"))
         logger.info("Google Maps client loaded successfully.")
     return _GOOGLE_MAPS_CLIENT
@@ -135,7 +128,6 @@ def get_postgres_connection():
     """Get the loaded PostgreSQL connection (lazy loaded)."""
     global _POSTGRES_CONNECTION
     if _POSTGRES_CONNECTION is None:
-        load_env()
         _POSTGRES_CONNECTION = psycopg2.connect(os.environ.get("POSTGRES_DB_URI"))
         logger.info("Connection to the PostgreSQL established successfully.")
     return _POSTGRES_CONNECTION

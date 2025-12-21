@@ -53,21 +53,21 @@ async def graph_search(state: State) -> State:
             min(r.providedDate) AS oldest_cert_date
     }
 
-    // 4. Calculate Experience in Months from oldest certificate
+    // 4. Calculate Experience Years from oldest certificate
     WITH pt, dist_meters, 
         coalesce(found_certs, []) AS found_certs,
         coalesce(cert_matches, 0) AS cert_matches,
         CASE 
             WHEN oldest_cert_date IS NOT NULL 
-            THEN duration.between(oldest_cert_date, date()).years * 12 + duration.between(oldest_cert_date, date()).months
+            THEN duration.between(oldest_cert_date, date()).years
             ELSE 0 
-        END AS experience_months
+        END AS experience_years
 
-    // 5. Experience Filter (Null-safe) - convert min_experience_years to months
-    WHERE $min_experience_years IS NULL OR experience_months >= ($min_experience_years * 12)
+    // 5. Experience Filter (Null-safe)
+    WHERE $min_experience_years IS NULL OR experience_years >= $min_experience_years
 
     // 6. Calculate Scores
-    WITH pt, dist_meters, found_certs, experience_months,
+    WITH pt, dist_meters, found_certs, experience_years,
         (cert_matches * 10) AS cert_score,
         
         // Price Score
@@ -77,7 +77,7 @@ async def graph_search(state: State) -> State:
         END AS price_score
 
     // 7. Final Calculations
-    WITH pt, found_certs, dist_meters, experience_months,
+    WITH pt, found_certs, dist_meters, experience_years,
         (cert_score + price_score) AS partial_score,
         {
             certificates: cert_score, 
@@ -86,7 +86,7 @@ async def graph_search(state: State) -> State:
 
     // 8. Get all certificates for the PT
     OPTIONAL MATCH (pt)-[:HAS_CERTIFICATE]->(all_cert:Certificates)
-    WITH pt, found_certs, dist_meters, experience_months, partial_score, score_breakdown,
+    WITH pt, found_certs, dist_meters, experience_years, partial_score, score_breakdown,
         collect(distinct all_cert.certName) AS all_certificates
 
     // 9. Return Sorted Results
@@ -97,7 +97,7 @@ async def graph_search(state: State) -> State:
         pt.lon AS longitude,
         pt.businessAddress AS address,
         toInteger(dist_meters) AS distance_in_meters,
-        experience_months,
+        experience_years,
         CASE WHEN pt.isMale THEN 'male' ELSE 'female' END AS gender,
         all_certificates AS certificates,
         pt.cheapestPrice AS price,

@@ -8,7 +8,7 @@ import os
 async def test_agent_triggers_recommendation():
     # 1. User message that SHOULD trigger the tool
     messages = [
-        ("user", "Hi, can you recommend some gyms? ")
+        ("user", "helo tôi muốn tìm phòng gym có máy tập co7 nguc, gàn truong dai hoc fpt khu cn cao ")
     ]
     
     context = Context(
@@ -17,7 +17,7 @@ async def test_agent_triggers_recommendation():
     )
 
     # 2. Run the agent
-    res = await graph.ainvoke({"messages": messages, "user_location": UserLocation(latitude=10.875, longitude=106.800)}, context=context)
+    res = await graph.ainvoke({"messages": messages}, context=context)
 
     # 3. Verify tool usage
     last_message = res["messages"][-1]
