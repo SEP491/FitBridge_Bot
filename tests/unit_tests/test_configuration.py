@@ -1,9 +1,20 @@
-from langgraph.pregel import Pregel
+import os
 
-from agent.graph import graph
+from react_agent.context import Context
 
 
-def test_placeholder() -> None:
-    # TODO: You can add actual unit tests
-    # for your graph and other logic here.
-    assert isinstance(graph, Pregel)
+def test_context_init() -> None:
+    context = Context(model="openai/gpt-4o-mini")
+    assert context.model == "openai/gpt-4o-mini"
+
+
+def test_context_init_with_env_vars() -> None:
+    os.environ["MODEL"] = "openai/gpt-4o-mini"
+    context = Context()
+    assert context.model == "openai/gpt-4o-mini"
+
+
+def test_context_init_with_env_vars_and_passed_values() -> None:
+    os.environ["MODEL"] = "openai/gpt-4o-mini"
+    context = Context(model="openai/gpt-5o-mini")
+    assert context.model == "openai/gpt-5o-mini"

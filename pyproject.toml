@@ -1,16 +1,21 @@
 [project]
-name = "agent"
+name = "react-agent"
 version = "0.0.1"
-description = "Starter template for making a new agent LangGraph."
+description = "Starter template for making a custom Reasoning and Action agent (using tool calling) in LangGraph."
 authors = [
     { name = "William Fu-Hinthorn", email = "13333726+hinthornw@users.noreply.github.com" },
 ]
 readme = "README.md"
 license = { text = "MIT" }
-requires-python = ">=3.10"
+requires-python = ">=3.11,<4.0"
 dependencies = [
     "langgraph>=1.0.0",
+    "langchain-openai>=0.1.22",
+    "langchain-anthropic>=0.1.23",
+    "langchain>=0.2.14",
+    "langchain-fireworks>=0.1.7",
     "python-dotenv>=1.0.1",
+    "langchain-tavily>=0.1",
 ]
 
 
@@ -22,10 +27,10 @@ requires = ["setuptools>=73.0.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools]
-packages = ["langgraph.templates.agent", "agent"]
+packages = ["langgraph.templates.react_agent", "react_agent"]
 [tool.setuptools.package-dir]
-"langgraph.templates.agent" = "src/agent"
-"agent" = "src/agent"
+"langgraph.templates.react_agent" = "src/react_agent"
+"react_agent" = "src/react_agent"
 
 
 [tool.setuptools.package-data]
@@ -58,8 +63,6 @@ convention = "google"
 [dependency-groups]
 dev = [
     "anyio>=4.7.0",
-    "langgraph-cli[inmem]>=0.4.7",
-    "mypy>=1.13.0",
+    "langgraph-cli[inmem]>=0.4.10",
     "pytest>=8.3.5",
-    "ruff>=0.8.2",
 ]
