@@ -19,9 +19,10 @@ async def extract_user_location(
     
     Use this tool when the user provides their location as an address, place name, or landmark
     instead of coordinates. Examples:
-    - "I'm at Quận 1, Ho Chi Minh City"
-    - "Near Landmark 81"
-    - "123 Nguyen Hue Street"
+    - "I'm at Quận 1, Ho Chi Minh City" -> "Quận 1, Thành phố Hồ Chí Minh"
+    - "Near Landmark 81" -> "Landmark 81"
+    - "123 Nguyen Hue Street" -> "123 Nguyễn Huệ, Quận 1, Thành phố Hồ Chí Minh"
+    Extract the address, there should be only names and nouns
     
     Args:
         address: The address, place name, or landmark to geocode into coordinates.

@@ -1,11 +1,11 @@
 from ..state import State
 from ..entities.entities import ExtractedUserCriteria
-from langchain_core.messages import SystemMessage, HumanMessage
+from langchain_core.messages import SystemMessage, HumanMessage, AIMessage
 from react_agent.infrastructure import get_model
 
 async def extract_user_criteria(state: State) -> State:
     """Extract user criteria modifications from query for gym or PT search."""
-    system_prompt = f"""Extract the user's search criteria modifications from their message. This can be for GYM search or PERSONAL TRAINER (PT) search. Return the criterias in english.
+    system_prompt = f"""Extract the user's search criteria modifications from the messages history. This can be for GYM search or PERSONAL TRAINER (PT) search. Return the criterias in english.
 
     ### CRITICAL DISTINCTION - SEARCH TYPE vs CRITERIA:
     These keywords indicate SEARCH TYPE only - they are NOT equipment, facilities, or certificates:
@@ -73,10 +73,18 @@ async def extract_user_criteria(state: State) -> State:
     Return None for fields not mentioned in the query.
     """
     
+    # Filter messages to only include HumanMessages (user input)
+    # Exclude AIMessages with tool_calls to avoid unresolved tool call errors
+    filtered_messages = [
+        msg for msg in state.messages
+        if isinstance(msg, HumanMessage) or 
+        (isinstance(msg, AIMessage) and not msg.tool_calls)
+    ]
+    
     criteria_parser = get_model().with_structured_output(ExtractedUserCriteria)
     result = await criteria_parser.ainvoke([
         SystemMessage(content=system_prompt),
-        HumanMessage(content=state.user_query)
+        *filtered_messages
     ])
 
     state.extracted_criteria = result

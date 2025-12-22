@@ -12,14 +12,10 @@ from ..domain.entities import UserLocation
 
 def _get_extract_criteria_input(state: State) -> dict:
     """Prepares the input for the user criteria extraction subgraph."""
-    user_query = next(
-        (m.content for m in reversed(state.messages) if m.type == "human"),
-        ""
-    )
     return {
         "search_criteria": state.search_criteria,
         "user_location": state.user_location,
-        "user_query": user_query
+        "messages": state.messages
     }
 
 
@@ -74,6 +70,14 @@ async def get_gym_recommendations(
         )
     except CancelledError:
         print("Graph execution was cancelled gracefully.")
+        return Command(
+            update={
+                "messages": [ToolMessage(
+                    content="Search was cancelled. Please try again.",
+                    tool_call_id=tool_call_id
+                )]
+            }
+        )
 
     except Exception as e:
         # This catches the error and sends it back to the LLM. 

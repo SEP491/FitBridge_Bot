@@ -23,6 +23,9 @@ dependencies = [
     "psycopg[binary,pool]>=3.2.0",
     # Legacy psycopg2 for infrastructure module
     "psycopg2-binary>=2.9.0",
+    # Infrastructure dependencies
+    "langchain-neo4j>=0.1.0",
+    "googlemaps>=4.10.0",
 ]
 
 

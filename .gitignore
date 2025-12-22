@@ -164,3 +164,4 @@ cython_debug/
 .langgraph_api
 PROJECT_STRUCTURE.md
 tests/cassettes/103fe67e-a040-4e4e-aadb-b20a7057f904.yaml
+chatbot.env

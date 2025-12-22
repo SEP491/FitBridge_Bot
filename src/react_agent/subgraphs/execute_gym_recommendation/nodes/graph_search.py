@@ -22,8 +22,12 @@ async def graph_search(state: State) -> State:
     WHERE $lat IS NULL OR $lon IS NULL OR $initial_radius_in_km IS NULL 
     OR dist_meters < ($initial_radius_in_km * 1000 * buffer)
 
-    // 2. Main Equipment Search
+    // 2. Main Equipment Search (with empty list handling)
     CALL (gym) {
+        // BRANCH A: User provided equipment -> Search & Filter
+        WITH gym
+        WHERE size($query_terms) > 0
+        
         UNWIND $query_terms AS query_term
         CALL db.index.fulltext.queryNodes("assetNameIndex", query_term + coalesce($fuzzy_levenshtein_distance, ""))
         YIELD node AS candidate_asset, score
@@ -31,12 +35,20 @@ async def graph_search(state: State) -> State:
         
         MATCH (gym)-[:OWNS]->(candidate_asset)
         RETURN collect(distinct candidate_asset.name) as found_equip, count(distinct candidate_asset) as equip_matches
+
+        UNION
+
+        // BRANCH B: Empty equipment list -> Return empty results but keep gym
+        WITH gym
+        WHERE size($query_terms) = 0
+        RETURN [] as found_equip, 0 as equip_matches
     }
 
-    // 3. Related Equipment Logic
+    // 3. Related Equipment Logic (with empty list handling)
     CALL (gym, found_equip) {
+        // BRANCH A: Has equipment -> Find related
         WITH gym, found_equip
-        WHERE found_equip IS NOT NULL
+        WHERE size(found_equip) > 0
         
         MATCH (gym)-[:OWNS]->(original:GymAsset)-[:TARGETS]->(m:Muscle)
         WHERE original.name IN found_equip
@@ -47,6 +59,13 @@ async def graph_search(state: State) -> State:
         WITH m, related
         ORDER BY rand()
         RETURN m.name AS muscle_group, collect(distinct related.name)[0] AS alt_machine
+
+        UNION
+
+        // BRANCH B: No equipment -> Return null placeholders
+        WITH gym, found_equip
+        WHERE size(found_equip) = 0
+        RETURN null AS muscle_group, null AS alt_machine
     }
 
     // 4. Aggregate & Calculate Scores (Null-safe checks for Gym properties)
