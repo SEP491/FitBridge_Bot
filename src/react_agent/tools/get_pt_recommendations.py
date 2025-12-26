@@ -12,7 +12,7 @@ def _get_extract_criteria_input(state: State) -> dict:
     """Prepares the input for the user criteria extraction subgraph."""
     return {
         "search_criteria": state.search_criteria,
-        "user_location": state.user_location,
+        "user_origin": state.user_origin,
         "messages": state.messages
     }
 
@@ -24,12 +24,12 @@ async def get_pt_recommendations(
 ):
     """Executes the full personal trainer (PT) recommendation engine. Requires user location to be set first."""
     
-    # Validate location is set
-    if not state.user_location or state.user_location.latitude is None or state.user_location.longitude is None:
+    # Validate user_origin is set (required for PT search)
+    if not state.user_origin or state.user_origin.latitude is None or state.user_origin.longitude is None:
         return Command(
             update={
                 "messages": [ToolMessage(
-                    content="Error: User location is not set. Please use 'extract_user_location' tool first to set the user's location, then call this tool again.",
+                    content="Error: User origin location is not set. Please use 'extract_locations' tool with location_type='user_origin' first to set the user's current location, then call this tool again.",
                     tool_call_id=tool_call_id
                 )]
             }
@@ -52,7 +52,7 @@ async def get_pt_recommendations(
         
         pt_recommendation_subgraph_input = {
             "search_criteria": updated_search_criteria,
-            "user_location": state.user_location,
+            "user_origin": state.user_origin,
         }
         pt_recommendation_subgraph_state = await pt_recommendation_graph.ainvoke(
             pt_recommendation_subgraph_input
@@ -61,7 +61,7 @@ async def get_pt_recommendations(
         return Command(
             update={
                 "search_criteria": updated_search_criteria,
-                "user_location": state.user_location,
+                "user_origin": state.user_origin,
                 "final_report": pt_recommendation_subgraph_state.get("final_report", "No report generated."),
                 "messages": [ToolMessage(content=pt_recommendation_subgraph_state.get("final_report", "No report generated."), tool_call_id=tool_call_id)]
             }

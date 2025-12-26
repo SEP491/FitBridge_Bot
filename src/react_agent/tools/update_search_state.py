@@ -29,7 +29,7 @@
 #         state_dict = state.model_dump()
 #         subgraph_input = {
 #             "search_criteria": state_dict.get("search_criteria", {}),
-#             "user_location": state_dict.get("user_location", {}),
+#             "user_origin": state_dict.get("user_origin", {}),
 #             "user_query": user_query
 #         }
 

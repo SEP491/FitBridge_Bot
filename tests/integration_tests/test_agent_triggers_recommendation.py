@@ -1,5 +1,5 @@
 import pytest
-from react_agent.domain.entities import UserLocation
+from react_agent.domain.entities import UserOrigin
 from react_agent.graph import graph
 from react_agent.context import Context
 import os

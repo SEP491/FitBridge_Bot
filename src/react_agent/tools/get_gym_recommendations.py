@@ -8,13 +8,13 @@ from ..subgraphs.execute_gym_recommendation.graph import graph as gym_recommenda
 from ..subgraphs.extract_user_criteria.graph import graph as extract_user_criteria_graph
 from ..state import State
 from ..domain.criterias import SearchCriteria
-from ..domain.entities import UserLocation
+from ..domain.entities import UserOrigin
 
 def _get_extract_criteria_input(state: State) -> dict:
     """Prepares the input for the user criteria extraction subgraph."""
     return {
         "search_criteria": state.search_criteria,
-        "user_location": state.user_location,
+        "user_origin": state.user_origin,
         "messages": state.messages
     }
 
@@ -26,12 +26,12 @@ async def get_gym_recommendations(
 ):
     """Executes the full gym recommendation engine. Requires user location to be set first."""
     
-    # Validate location is set
-    if not state.user_location or state.user_location.latitude is None or state.user_location.longitude is None:
+    # Validate search_center is set (required for gym search)
+    if not state.search_center or state.search_center.latitude is None or state.search_center.longitude is None:
         return Command(
             update={
                 "messages": [ToolMessage(
-                    content="Error: User location is not set. Please use 'extract_user_location' tool first to set the user's location, then call this tool again.",
+                    content="Error: Search center location is not set. Please use 'extract_locations' tool with location_type='search_center' first to set the search area, then call this tool again.",
                     tool_call_id=tool_call_id
                 )]
             }
@@ -54,7 +54,8 @@ async def get_gym_recommendations(
             )
         gym_recommendation_subgraph_input = {
             "search_criteria": updated_search_criteria,
-            "user_location": state.user_location,
+            "search_center": state.search_center,
+            "user_origin": state.user_origin,  # Used for distance calculations
         }
         gym_recommendation_subgraph_state = await gym_recommendation_graph.ainvoke(
             gym_recommendation_subgraph_input
@@ -63,7 +64,7 @@ async def get_gym_recommendations(
         return Command(
             update={
                 "search_criteria": updated_search_criteria,
-                "user_location": state.user_location,
+                "user_origin": state.user_origin,
                 "final_report": gym_recommendation_subgraph_state.get("final_report", "No report generated."),
                 "messages": [ToolMessage(content=gym_recommendation_subgraph_state.get("final_report", "No report generated."), tool_call_id=tool_call_id)]
             }

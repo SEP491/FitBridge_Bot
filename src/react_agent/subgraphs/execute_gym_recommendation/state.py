@@ -1,12 +1,13 @@
 from pydantic import BaseModel, Field
 from react_agent.domain.criterias import SearchCriteria
-from react_agent.domain.entities import UserLocation, GymAsset, PTAsset
+from react_agent.domain.entities import SearchCenter, GymAsset, PTAsset, UserOrigin
 from typing import Union
 
 class InputState(BaseModel):
     """Input state for the execute_gym_recommendation subgraph."""
     search_criteria: SearchCriteria = Field(default_factory=SearchCriteria) 
-    user_location: UserLocation = Field(default_factory=UserLocation)
+    user_origin: UserOrigin = Field(default_factory=UserOrigin)
+    search_center: SearchCenter = Field(default_factory=SearchCenter)
 
 class State(InputState):
     """State for the execute_gym_recommendation subgraph."""

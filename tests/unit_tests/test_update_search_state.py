@@ -32,7 +32,7 @@ async def test_update_search_state_success():
         mock_state.model_dump.return_value = {
             "messages": messages,
             "search_criteria": {},
-            "user_location": {}
+            "user_origin": {}
         }
 
         # Call the tool
@@ -85,7 +85,7 @@ async def test_update_search_state_sequential():
         state_1.model_dump.return_value = {
             "messages": state_1.messages,
             "search_criteria": {}, # Empty initially
-            "user_location": {}
+            "user_origin": {}
         }
 
         # Call Tool 1
@@ -114,7 +114,7 @@ async def test_update_search_state_sequential():
         state_2.model_dump.return_value = {
             "messages": state_2.messages,
             "search_criteria": current_criteria_model.model_dump(),
-            "user_location": {}
+            "user_origin": {}
         }
 
         # Call Tool 2

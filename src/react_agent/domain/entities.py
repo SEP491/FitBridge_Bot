@@ -1,9 +1,15 @@
 from pydantic import BaseModel, Field
 from typing import Optional
 
-class UserLocation(BaseModel):
-    latitude: Optional[float] = Field(default=None, description="Latitude of the user's location")
-    longitude: Optional[float] = Field(default=None, description="Longitude of the user's location")
+class SearchCenter(BaseModel):
+    latitude: Optional[float] = Field(default=None, description="Latitude of the search center")
+    longitude: Optional[float] = Field(default=None, description="Longitude of the search center")
+    # distance_in_meters: float = Field(description="Distance from user location in meters")
+
+class UserOrigin(BaseModel):
+    latitude: Optional[float] = Field(default=None, description="Latitude of the user's origin")
+    longitude: Optional[float] = Field(default=None, description="Longitude of the user's origin")
+
 class GymAsset(BaseModel):
     name: str = Field(description="Name of the gym")
     address: str = Field(description="Address of the gym")

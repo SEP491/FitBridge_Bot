@@ -1,5 +1,5 @@
 import pytest
-from react_agent.domain.entities import UserLocation
+from react_agent.domain.entities import UserOrigin
 from react_agent.graph import graph
 from react_agent.context import Context
 from langchain_core.messages import HumanMessage
@@ -15,7 +15,7 @@ async def test_combined_update_and_recommend():
     print("\n--- Sending User Request ---")
     msg = "I want to build muscle and find a gym with a pool. Please recommend some gyms."
     
-    res = await graph.ainvoke({"user_location": UserLocation(latitude=10.875, longitude=106.800), "messages": [HumanMessage(content=msg)]}, context=context)
+    res = await graph.ainvoke({"user_origin": UserOrigin(latitude=10.875, longitude=106.800), "messages": [HumanMessage(content=msg)]}, context=context)
     
     # 1. Verify Search Criteria Updated
     criteria = res.get("search_criteria")

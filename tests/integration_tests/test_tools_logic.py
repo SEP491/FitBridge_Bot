@@ -1,7 +1,7 @@
 import pytest
 from react_agent.tools import TOOLS
 from react_agent.domain.criterias import SearchCriteria
-from react_agent.domain.entities import UserLocation
+from react_agent.domain.entities import UserOrigin
 
 def test_tools_registration():
     """Verify that all expected tools are registered in the TOOLS list."""
@@ -26,7 +26,7 @@ async def test_get_gym_recommendations_tool_direct():
     # Mock the state that InjectedState would provide
     mock_state = {
         "search_criteria": SearchCriteria(goal="Build muscle"),
-        "user_location": UserLocation(latitude=10.8, longitude=106.8)
+        "user_origin": UserOrigin(latitude=10.8, longitude=106.8)
     }
     
     # Call the tool directly

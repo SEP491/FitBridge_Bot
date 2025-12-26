@@ -1,5 +1,5 @@
 import pytest
-from react_agent.domain.entities import UserLocation
+from react_agent.domain.entities import UserOrigin
 from react_agent.domain.criterias import SearchCriteria
 from react_agent.graph import graph
 from react_agent.context import Context
@@ -21,7 +21,7 @@ async def test_agent_triggers_pt_recommendation():
     res = await graph.ainvoke(
         {
             "messages": messages, 
-            "user_location": UserLocation(latitude=10.875, longitude=106.800),
+            "user_origin": UserOrigin(latitude=10.875, longitude=106.800),
             "search_criteria": SearchCriteria(certificates=["Certified Personal Trainer"])
         }, 
         context=context
@@ -55,7 +55,7 @@ async def test_agent_triggers_pt_recommendation():
 #     res = await graph.ainvoke(
 #         {
 #             "messages": messages, 
-#             "user_location": UserLocation(latitude=10.875, longitude=106.800)
+#             "user_origin": UserOrigin(latitude=10.875, longitude=106.800)
 #         }, 
 #         context=context
 #     )
@@ -80,7 +80,7 @@ async def test_agent_triggers_pt_recommendation():
 #     res = await graph.ainvoke(
 #         {
 #             "messages": messages, 
-#             "user_location": UserLocation(latitude=10.875, longitude=106.800)
+#             "user_origin": UserOrigin(latitude=10.875, longitude=106.800)
 #         }, 
 #         context=context
 #     )

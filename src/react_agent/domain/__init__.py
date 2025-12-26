@@ -1,4 +1,4 @@
 from .criterias import SearchCriteria
-from .entities import UserLocation, GymAsset, PTAsset
+from .entities import UserOrigin, GymAsset, PTAsset
 
-__all__ = ["SearchCriteria", "UserLocation", "GymAsset", "PTAsset"]
+__all__ = ["SearchCriteria", "UserOrigin", "GymAsset", "PTAsset"]

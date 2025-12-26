@@ -9,7 +9,7 @@ from langgraph.graph import add_messages
 from langgraph.managed import IsLastStep
 from typing_extensions import Annotated
 from react_agent.domain.criterias import SearchCriteria
-from react_agent.domain.entities import UserLocation
+from react_agent.domain.entities import UserOrigin, SearchCenter
 
 
 class InputState(BaseModel):
@@ -19,8 +19,10 @@ class InputState(BaseModel):
     """
     search_criteria: SearchCriteria = Field(default_factory=SearchCriteria)
     """Search criteria for the agent."""
-    user_location: UserLocation = Field(default_factory=UserLocation)
-    """User's current location"""
+    user_origin: UserOrigin = Field(default_factory=UserOrigin)
+    """User's physical current location"""
+    search_center: SearchCenter = Field(default_factory=SearchCenter)
+    """Where to look for gyms/PTs"""
 
     messages: Annotated[Sequence[AnyMessage], add_messages] = Field(
         default_factory=list

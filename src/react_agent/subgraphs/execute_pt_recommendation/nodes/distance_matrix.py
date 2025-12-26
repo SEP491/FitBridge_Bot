@@ -10,7 +10,7 @@ async def distance_matrix(state: State) -> State:
     if not candidates:
         return state
         
-    user_loc = (state.user_location.latitude, state.user_location.longitude)    
+    user_loc = (state.user_origin.latitude, state.user_origin.longitude)    
     destinations = [(pt.latitude, pt.longitude) for pt in candidates if pt.latitude is not None and pt.longitude is not None]
     
     if not destinations:

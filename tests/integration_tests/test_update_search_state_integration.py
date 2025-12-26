@@ -24,8 +24,8 @@ async def test_agent_uses_update_search_state():
     # 2. Run the agent
     print("\n--- Invoking Agent ---")
     # This runs the full ReAct loop
-    # We pass user_location to ensure the tool receives it
-    from react_agent.domain.entities import UserLocation
+    # We pass user_origin to ensure the tool receives it
+    from react_agent.domain.entities import UserOrigin
     
     res = await graph.ainvoke(
         {

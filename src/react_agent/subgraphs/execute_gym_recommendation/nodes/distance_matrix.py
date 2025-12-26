@@ -10,7 +10,7 @@ async def distance_matrix(state: State) -> State:
     if not candidates:
         return state
         
-    user_loc = (state.user_location.latitude, state.user_location.longitude)    
+    user_origin = (state.user_origin.latitude, state.user_origin.longitude)    
     destinations = [(gym.latitude, gym.longitude) for gym in candidates if gym.latitude is not None and gym.longitude is not None]
     
     if not destinations:
@@ -19,7 +19,7 @@ async def distance_matrix(state: State) -> State:
     def _sync_gmaps_call():
         gmaps = get_google_maps_client()
         return gmaps.distance_matrix(
-            origins=[user_loc],
+            origins=[user_origin],
             destinations=destinations,
             mode="driving",
             departure_time=datetime.now()

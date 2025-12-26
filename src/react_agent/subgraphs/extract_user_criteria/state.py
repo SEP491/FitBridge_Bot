@@ -1,6 +1,6 @@
 from pydantic import BaseModel, Field
 from react_agent.domain.criterias import SearchCriteria
-from react_agent.domain.entities import UserLocation
+from react_agent.domain.entities import UserOrigin
 from .entities.entities import ExtractedUserCriteria
 from langchain_core.messages import AnyMessage
 
@@ -8,7 +8,7 @@ class InputState(BaseModel):
     """Input state for the extract_user_criteria subgraph."""
     messages: list[AnyMessage] = Field(description="The messages history of the conversation.")
     search_criteria: SearchCriteria = Field(default_factory=SearchCriteria) 
-    user_location: UserLocation = Field(default_factory=UserLocation)
+    user_origin: UserOrigin = Field(default_factory=UserOrigin)
 
 class State(InputState):
     """State for the extract_user_criteria subgraph."""

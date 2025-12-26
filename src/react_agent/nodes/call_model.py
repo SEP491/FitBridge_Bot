@@ -28,10 +28,13 @@ async def call_model(
     model = load_chat_model(runtime.context.model).bind_tools(TOOLS)
 
     # Build explicit location status for LLM
-    location_status = "NOT SET - Ask user for their location"
-    if state.user_location and state.user_location.latitude is not None and state.user_location.longitude is not None:
-        location_status = f"SET (lat: {state.user_location.latitude}, lon: {state.user_location.longitude})"
+    user_origin_location_status = "NOT SET - Ask user for their location"
+    search_center_location_status = "NOT SET - Ask user for the location to look for gyms/PTs"
+    if state.user_origin and state.user_origin.latitude is not None and state.user_origin.longitude is not None:
+        user_origin_location_status = f"SET (lat: {state.user_origin.latitude}, lon: {state.user_origin.longitude})"
     
+    if state.search_center and state.search_center.latitude is not None and state.search_center.longitude is not None:
+        search_center_location_status = f"SET (lat: {state.search_center.latitude}, lon: {state.search_center.longitude})"
     # Build explicit criteria status for LLM
     criteria = state.search_criteria
     
@@ -66,13 +69,17 @@ async def call_model(
     tool_status = ""
     if last_tool_called:
         tool_status = f"\nLAST ACTION:\n- Last tool called: {last_tool_called}\n- DO NOT call '{last_tool_called}' again unless user explicitly requests a new search.\n"
-    
     if has_recommendation_results:
         tool_status += f"- Recommendation results ALREADY GENERATED. Present them to the user instead of calling tools again.\n"
+                                                                                    
+    # Check location requirements
+    search_center_set = state.search_center and state.search_center.latitude is not None and state.search_center.longitude is not None
+    user_origin_set = state.user_origin and state.user_origin.latitude is not None and state.user_origin.longitude is not None
     
     state_summary = (
         f"CURRENT SEARCH STATE:\n"
-        f"- User Location: {location_status}\n"
+        f"- User Origin Location: {user_origin_location_status} {'(OPTIONAL - used for distance calculations)' if not user_origin_set else ''}\n"
+        f"- Search Center Location: {search_center_location_status} {'(REQUIRED for search)' if not search_center_set else ''}\n"
         f"- Training Goal: {goal_status}\n"
         f"- Gym Equipment/Facilities: {equipment_status}\n"
         f"- PT Certificates: {certificates_status}\n"
@@ -81,8 +88,10 @@ async def call_model(
         f"- Max Price: {price_status}\n"
         f"\n"
         f"SEARCH READINESS:\n"
-        f"- Can search gyms: {'YES' if can_search_gym else 'NO - Need training goal OR equipment preferences'}\n"
-        f"- Can search PTs: {'YES' if can_search_pt else 'NO - Need training goal OR certificate preferences'}\n"
+        f"- Search Center Required: {'SET' if search_center_set else 'NOT SET - REQUIRED for search'}\n"
+        f"- User Origin Status: {user_origin_location_status} (OPTIONAL - used for distance calculations)\n"
+        f"- Can search gyms: {'YES' if (can_search_gym and search_center_set) else 'NO - Need search_center location AND (training goal OR equipment preferences)'}\n"
+        f"- Can search PTs: {'YES' if (can_search_pt and user_origin_set) else 'NO - Need user_origin location AND (training goal OR certificate preferences)'}\n"
         f"{tool_status}"
     )
     print(state_summary)

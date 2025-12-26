@@ -6,7 +6,7 @@ using MemorySaver for in-memory checkpoints across conversations.
 
 import logging
 from contextlib import asynccontextmanager
-from typing import AsyncGenerator
+from typing import AsyncGenerator, Optional
 
 from fastapi import FastAPI, Query, HTTPException
 from fastapi.responses import StreamingResponse
@@ -17,6 +17,7 @@ from langchain_core.messages import HumanMessage
 from react_agent.graph import builder
 from react_agent.state import InputState
 from react_agent.context import Context
+from react_agent.domain.entities import UserOrigin
 
 logger = logging.getLogger(__name__)
 
@@ -29,7 +30,7 @@ class ChatRequest(BaseModel):
 
     message: str = Field(..., description="The user's message")
     search_criteria: dict = Field(default_factory=dict, description="Optional search criteria")
-    user_location: dict = Field(default_factory=dict, description="Optional user location")
+    user_origin: dict = Field(default_factory=dict, description="Optional user location")
 
 
 class ChatResponse(BaseModel):
@@ -150,16 +151,20 @@ async def stream_graph_events(
 
 @app.get("/stream")
 async def stream_chat(
-    thread_id: str = Query(..., description="Unique thread ID for conversation persistence"),
+    thread_id: str = Query(..., description="Unique notoij thread ID for conversation persistence"),
     message: str = Query(..., description="The user's message"),
+    latitude: Optional[float] = Query(None, description="Optional latitude of the user's location"),
+    longitude: Optional[float] = Query(None, description="Optional longitude of the user's location"),
 ) -> StreamingResponse:
     """Stream a chat response from the agent.
+    eat shit nigga
 
     This endpoint:
     1. Accepts a thread_id and message via query parameters
-    2. Retrieves existing state from checkpointer (if any)
-    3. Appends new message to conversation history
-    4. Streams the agent's response as Server-Sent Events (SSE)
+    2. Optionally accepts user origin (latitude/longitude)
+    3. Retrieves existing state from checkpointer (if any)
+    4. Appends new message to conversation history
+    5. Streams the agent's response as Server-Sent Events (SSE)
 
     Events streamed:
     - `token`: Individual tokens from LLM response
@@ -172,6 +177,7 @@ async def stream_chat(
     Args:
         thread_id: Client-provided unique identifier for the conversation
         message: The user's message to process
+        user_origin: Optional user origin (latitude/longitude)
 
     Returns:
         StreamingResponse with SSE content type
@@ -194,9 +200,13 @@ async def stream_chat(
         graph_input = {"messages": [HumanMessage(content=message)]}
     else:
         # New thread - pass full initial state
-        graph_input = InputState(
+        input_state = InputState(
             messages=[HumanMessage(content=message)],
-        ).model_dump()
+        )
+        # Set user_origin if latitude and longitude are provided
+        if latitude is not None and longitude is not None:
+            input_state.user_origin = UserOrigin(latitude=latitude, longitude=longitude)
+        graph_input = input_state.model_dump()
 
     # Use default context
     context = Context()
@@ -251,14 +261,14 @@ async def invoke_chat(
         input_state = InputState(
             messages=[HumanMessage(content=request.message)],
         )
-        # Override search_criteria and user_location if provided
+        # Override search_criteria and user_origin if provided
         if request.search_criteria:
             input_state.search_criteria = input_state.search_criteria.model_copy(
                 update=request.search_criteria
             )
-        if request.user_location:
-            input_state.user_location = input_state.user_location.model_copy(
-                update=request.user_location
+        if request.user_origin:
+            input_state.user_origin = input_state.user_origin.model_copy(
+                update=request.user_origin
             )
         graph_input = input_state.model_dump()
 
@@ -292,17 +302,6 @@ async def invoke_chat(
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.get("/health")
-async def health_check() -> dict:
-    """Health check endpoint.
-
-    Returns:
-        Status dict indicating server health
-    """
-    return {
-        "status": "healthy",
-        "graph_initialized": _graph is not None,
-    }
 
 
 @app.get("/threads/{thread_id}/state")

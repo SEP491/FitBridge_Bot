@@ -1,7 +1,7 @@
 import pytest
 from react_agent.subgraphs.execute_gym_recommendation.graph import graph as subgraph
 from react_agent.domain.criterias import SearchCriteria
-from react_agent.domain.entities import UserLocation
+from react_agent.domain.entities import UserOrigin
 
 @pytest.mark.anyio
 async def test_subgraph_execution():
@@ -11,7 +11,7 @@ async def test_subgraph_execution():
             goal="Build muscle and strength",
             distance_in_meters=5000
         ),
-        "user_location": UserLocation(
+        "user_origin": UserOrigin(
             latitude=10.875, 
             longitude=106.800
         )
