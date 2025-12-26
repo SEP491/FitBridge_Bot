@@ -117,7 +117,7 @@ async def stream_graph_events(
             if event_type == "on_chat_model_stream":
                 # Token-level streaming from LLM
                 chunk = event.get("data", {}).get("chunk")
-                if chunk and hasattr(chunk, "content") and chunk.content:
+                if chunk and hasattr(chunk, "content") and chunk.content is not None:
                     yield f"event: token\ndata: {chunk.content}\n\n"
 
             elif event_type == "on_chain_end":
