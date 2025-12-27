@@ -64,7 +64,7 @@ def get_model() -> ChatOpenAI:
     global _MODEL
     if _MODEL is None:
         _MODEL = ChatOpenAI(
-            model="gpt-4o-mini",
+            model="gpt-5-mini-2025-08-07",
             temperature=0.3,
         )
         logger.info("OpenAI model loaded successfully.")

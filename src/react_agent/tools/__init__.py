@@ -6,11 +6,11 @@ from react_agent.tools.get_gym_equipments import get_gym_equipments
 from react_agent.tools.get_gym_reviews_and_ratings import get_gym_reviews_and_ratings
 from react_agent.tools.get_gym_recommendations import get_gym_recommendations
 from react_agent.tools.get_pt_recommendations import get_pt_recommendations
-from react_agent.tools.extract_locations import extract_locations
+# Note: extract_locations is now a node, not a tool
+# from react_agent.tools.extract_locations import extract_locations
 # from react_agent.tools.update_search_state import update_search_state
 
 TOOLS = [
-    extract_locations,
     get_gym_details_by_id,
     # get_gym_details_by_name,
     get_gym_facilities,

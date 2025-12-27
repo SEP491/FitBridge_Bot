@@ -1,3 +1,6 @@
+from react_agent.domain.entities import GymAsset, PTAsset
+
+
 from ..state import State
 
 def generate_report(state: State) -> State:
@@ -13,11 +16,11 @@ def generate_report(state: State) -> State:
         "Based on your fitness goals and current location, here are the best matches:\n"
     ]
 
-    for i, gym in enumerate(source_list[:3], 1):
+    for i, gym in enumerate[GymAsset | PTAsset](source_list[:3], 1):
         gym_id = gym.id
         name = gym.name
         address = gym.address
-        distance = gym.distance_in_meters
+        distance = gym.real_distance
         duration = gym.real_duration_min
         found_equip = gym.found_equip
         rating = gym.rating

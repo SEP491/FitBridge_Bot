@@ -29,7 +29,7 @@ async def get_pt_recommendations(
         return Command(
             update={
                 "messages": [ToolMessage(
-                    content="Error: User origin location is not set. Please use 'extract_locations' tool with location_type='user_origin' first to set the user's current location, then call this tool again.",
+                    content="Error: User origin location is not set. Please provide your current location in your message (e.g., 'I am at District 1') and the system will automatically extract it.",
                     tool_call_id=tool_call_id
                 )]
             }

@@ -30,7 +30,7 @@ def generate_report(state: State) -> State:
         pt_id = pt.id
         name = pt.name
         address = pt.address
-        distance = pt.distance_in_meters
+        distance = pt.real_distance
         duration = pt.real_duration_min
         experience_months = pt.experience_months
         gender = pt.gender

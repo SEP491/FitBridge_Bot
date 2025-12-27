@@ -6,7 +6,7 @@ using MemorySaver for in-memory checkpoints across conversations.
 
 import logging
 from contextlib import asynccontextmanager
-from typing import AsyncGenerator
+from typing import AsyncGenerator, Optional
 
 from fastapi import FastAPI, Query, HTTPException
 from fastapi.responses import StreamingResponse
@@ -17,6 +17,7 @@ from langchain_core.messages import HumanMessage
 from react_agent.graph import builder
 from react_agent.state import InputState
 from react_agent.context import Context
+from react_agent.domain.entities import UserOrigin
 
 logger = logging.getLogger(__name__)
 
@@ -152,6 +153,8 @@ async def stream_graph_events(
 async def stream_chat(
     thread_id: str = Query(..., description="Unique thread ID for conversation persistence"),
     message: str = Query(..., description="The user's message"),
+    latitude: Optional[float] = Query(None, description="Optional latitude of the user's location"),
+    longitude: Optional[float] = Query(None, description="Optional longitude of the user's location"),
 ) -> StreamingResponse:
     """Stream a chat response from the agent.
 
@@ -189,14 +192,20 @@ async def stream_chat(
     # Get existing state from checkpointer
     existing_state = await _graph.aget_state(config)
 
+    logger.info(f"Existing state: {existing_state}")
     if existing_state.values:
         # Thread exists - only pass the new message (add_messages reducer will append)
         graph_input = {"messages": [HumanMessage(content=message)]}
     else:
         # New thread - pass full initial state
-        graph_input = InputState(
+        input_state = InputState(
             messages=[HumanMessage(content=message)],
-        ).model_dump()
+        )
+        # Set user_origin if latitude and longitude are provided
+        if latitude is not None and longitude is not None:
+            input_state.user_origin = UserOrigin(latitude=latitude, longitude=longitude)
+        graph_input = input_state.model_dump()
+
 
     # Use default context
     context = Context()

@@ -3,7 +3,7 @@ from langchain_core.tools import tool
 
 @tool
 def get_gym_equipments(gym_id: str, equipment_name: str = None, limit: int = 5) -> str:
-    """Get the equipments of a gym by gym's ID (uuid). Call only once. If equipment_name is provided, return the equipment with the given name. The limit is the maximum number of equipments to return. If user requires getting all: assign limit = -1, or it will return 5 equipments by default."""
+    """Get the equipments of a gym by gym's ID (uuid). Call only once. If equipment_name is provided IN ENGLISH, return the equipment with the given name. The limit is the maximum number of equipments to return. If user requires getting all: assign limit = -1, or it will return 5 equipments by default."""
     graph = get_graph()
     
     # Count query (no limit) to get total available

@@ -4,7 +4,7 @@ from react_agent.infrastructure import get_postgres_connection, get_graph
 
 @tool
 def get_gym_facilities(gym_id: str, facility_name: str = None, limit: int = 5) -> str:
-    """Get the gym facilities of a gym by its ID (uuid). Call only once. If facility_name is provided, return the facility with the given name. The limit is the maximum number of facilities to return. If user requires getting all: assign limit = -1, or it will return 5 facilities by default."""
+    """Get the gym facilities of a gym by its ID (uuid). Call only once. If facility_name is provided IN ENGLISH, return the facility with the given name. The limit is the maximum number of facilities to return. If user requires getting all: assign limit = -1, or it will return 5 facilities by default."""
     graph = get_graph()
     
     # Count query (no limit) to get total available

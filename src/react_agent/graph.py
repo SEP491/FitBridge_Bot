@@ -16,16 +16,19 @@ from react_agent.state import InputState, State
 from react_agent.subgraphs.execute_gym_recommendation.graph import graph as execute_gym_recommendation_graph
 from react_agent.nodes.call_model import call_model
 from react_agent.nodes.route_model_output import route_model_output
+from react_agent.nodes.extract_locations import extract_locations
 from react_agent.tools import TOOLS
 from react_agent.utils import load_chat_model
 
 tools_node = ToolNode(TOOLS)
 builder = StateGraph(State, input_schema=InputState, context_schema=Context)
 
+builder.add_node("extract_locations", extract_locations)
 builder.add_node("tools", tools_node)
 builder.add_node("call_model", call_model)
 
-builder.add_edge("__start__", "call_model")
+builder.add_edge("__start__", "extract_locations")
+builder.add_edge("extract_locations", "call_model")
 builder.add_conditional_edges(
     "call_model",
     route_model_output,

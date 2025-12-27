@@ -11,21 +11,25 @@ async def graph_search(state: State) -> State:
     print(f"search_criteria: {state.search_criteria}")
     print(f"equipments_and_facilities: {state.search_criteria.equipments_and_facilities}")
 
+# GYM HAS NO RELATIONSHIP SHOULD NOT BE INCLUDED AND ADD FREELANCE PT HAS AVG RATING
     graph = await asyncio.to_thread(get_graph)
     query = """
 MATCH (gym:Gym)
 
-// --- 1. Geospatial Filter ---
+// --- 1. Geospatial & Existence Filter ---
 WITH gym, 
      point.distance(
          point({latitude: gym.lat, longitude: gym.lon}), 
          point({latitude: $lat, longitude: $lon})
      ) AS dist_meters
 
-// Logic: If user location is missing ($lat/$lon is null), ignore distance.
-// Otherwise, enforce the radius limit (default 5000m).
-WHERE ($lat IS NULL OR $lon IS NULL) 
-   OR (dist_meters IS NOT NULL AND dist_meters < 5000)
+WHERE 
+   // A. Location Logic
+   ( ($lat IS NULL OR $lon IS NULL) OR (dist_meters IS NOT NULL AND dist_meters < 5000) )
+   
+   // B. STRICT DATA FILTER (Added)
+   // Only keep gyms that actually OWN at least one asset
+   AND (gym)-[:OWNS]->()
 
 // --- 2. Main Equipment Search Subquery ---
 CALL (gym) {
@@ -34,7 +38,6 @@ CALL (gym) {
     WHERE size($query_terms) > 0
     
     UNWIND $query_terms AS query_term
-    // Fulltext search with fuzzy logic
     CALL db.index.fulltext.queryNodes("assetNameIndex", query_term + coalesce($fuzzy_levenshtein_distance, ""))
     YIELD node AS candidate_asset, score
     WHERE score > coalesce($min_fuzzy_scoring, 0)
@@ -52,7 +55,6 @@ CALL (gym) {
 
 // --- 3. Related Equipment Logic ---
 CALL (gym, found_equip) {
-    // Branch A: We found equipment, look for alternatives targeting same muscles
     WITH gym, found_equip
     WHERE size(found_equip) > 0
     
@@ -63,37 +65,32 @@ CALL (gym, found_equip) {
     WHERE NOT related.name IN found_equip
     
     WITH m, related
-    ORDER BY rand() // Randomize suggestion
+    ORDER BY rand()
     RETURN m.name AS muscle_group, collect(distinct related.name)[0] AS alt_machine
 
     UNION
 
-    // Branch B: No equipment found, return nulls
     WITH gym, found_equip
     WHERE size(found_equip) = 0
     RETURN null AS muscle_group, null AS alt_machine
 }
 
 // --- 4. Aggregate & Calculate Scores ---
-// Note: We include 'equip_matches' in the WITH clause so it carries over as a grouping key
 WITH gym, dist_meters, found_equip, equip_matches,
      [x IN collect(distinct alt_machine) WHERE x IS NOT NULL] AS related_recommendations,
      (equip_matches * 10) AS equip_score,
 
-     // Price Score
      CASE 
         WHEN $max_price IS NOT NULL AND gym.cheapestPrice IS NOT NULL AND gym.cheapestPrice <= $max_price THEN 20 
         ELSE 0 
      END AS price_score,
 
-     // Rating Score
      CASE 
         WHEN $rating IS NOT NULL AND gym.avgRating IS NOT NULL 
              AND ($rating - 0.5 <= gym.avgRating <= $rating + 0.5) THEN 10 
         ELSE 0 
      END AS rating_score,
 
-     // Time Score
      CASE 
         WHEN $open_time IS NOT NULL AND $close_time IS NOT NULL 
              AND gym.openTime IS NOT NULL AND gym.closeTime IS NOT NULL

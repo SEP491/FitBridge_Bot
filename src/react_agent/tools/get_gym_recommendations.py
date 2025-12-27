@@ -24,14 +24,24 @@ async def get_gym_recommendations(
     state: Annotated[State, InjectedState],
     tool_call_id: Annotated[str, InjectedToolCallId],
 ):
-    """Executes the full gym recommendation engine. Requires user location to be set first."""
+    """Executes the full gym recommendation engine. Requires user origin and search center to be set first.
+    May also dynamically extract update and find based on user criterias from the messages."""
     
-    # Validate search_center is set (required for gym search)
     if not state.search_center or state.search_center.latitude is None or state.search_center.longitude is None:
         return Command(
             update={
                 "messages": [ToolMessage(
-                    content="Error: Search center location is not set. Please use 'extract_locations' tool with location_type='search_center' first to set the search area, then call this tool again.",
+                    content="Error: Search center location is not set. Please provide a location in your message (e.g., 'Find gyms in District 1') and the system will automatically extract it.",
+                    tool_call_id=tool_call_id
+                )]
+            }
+        )
+
+    if not state.user_origin or state.user_origin.latitude is None or state.user_origin.longitude is None:
+        return Command(
+            update={
+                "messages": [ToolMessage(
+                    content="Error: User origin location is not set. Please provide your current location in your message (e.g., 'I am at District 1') and the system will automatically extract it.",
                     tool_call_id=tool_call_id
                 )]
             }
