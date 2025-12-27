@@ -105,7 +105,7 @@ async def stream_graph_events(
     }
 
     try:
-        # Stream events from the graph
+        # Stream events from the graph - only return model's response tokens
         async for event in _graph.astream_events(
             graph_input,
             config=config,
@@ -114,32 +114,11 @@ async def stream_graph_events(
         ):
             event_type = event.get("event")
             
-            # Stream different event types
+            # Only stream token-level streaming from LLM
             if event_type == "on_chat_model_stream":
-                # Token-level streaming from LLM
                 chunk = event.get("data", {}).get("chunk")
                 if chunk and hasattr(chunk, "content") and chunk.content is not None:
                     yield f"event: token\ndata: {chunk.content}\n\n"
-
-            elif event_type == "on_chain_end":
-                # Node completion
-                node_name = event.get("name", "unknown")
-                if node_name not in ["RunnableSequence", "ChannelWrite"]:
-                    yield f"event: node_end\ndata: {node_name}\n\n"
-
-            elif event_type == "on_tool_start":
-                # Tool invocation start
-                tool_name = event.get("name", "unknown")
-                yield f"event: tool_start\ndata: {tool_name}\n\n"
-
-            elif event_type == "on_tool_end":
-                # Tool invocation end
-                tool_name = event.get("name", "unknown")
-                output = event.get("data", {}).get("output", "")
-                # Truncate long outputs for SSE
-                if len(str(output)) > 500:
-                    output = str(output)[:500] + "..."
-                yield f"event: tool_end\ndata: {tool_name}\n\n"
 
         # Signal completion
         yield f"event: done\ndata: stream_complete\n\n"
@@ -162,13 +141,10 @@ async def stream_chat(
     1. Accepts a thread_id and message via query parameters
     2. Retrieves existing state from checkpointer (if any)
     3. Appends new message to conversation history
-    4. Streams the agent's response as Server-Sent Events (SSE)
+    4. Streams only the model's response tokens as Server-Sent Events (SSE)
 
     Events streamed:
-    - `token`: Individual tokens from LLM response
-    - `node_end`: When a graph node completes
-    - `tool_start`: When a tool begins execution
-    - `tool_end`: When a tool finishes execution
+    - `token`: Individual tokens from LLM response (only model output)
     - `done`: Stream completion signal
     - `error`: Error occurred during processing
 
@@ -177,7 +153,7 @@ async def stream_chat(
         message: The user's message to process
 
     Returns:
-        StreamingResponse with SSE content type
+        StreamingResponse with SSE content type containing only model tokens
     """
     global _graph
 

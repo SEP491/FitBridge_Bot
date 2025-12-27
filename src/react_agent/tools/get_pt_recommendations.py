@@ -25,6 +25,16 @@ async def get_pt_recommendations(
     """Executes the full personal trainer (PT) recommendation engine. Requires user location to be set first."""
     
     # Validate user_origin is set (required for PT search)
+    if not state.search_center or state.search_center.latitude is None or state.search_center.longitude is None:
+        return Command(
+            update={
+                "messages": [ToolMessage(
+                    content="Error: Search center location is not set. Please provide a location in your message (e.g., 'Find gyms in District 1') and the system will automatically extract it.",
+                    tool_call_id=tool_call_id
+                )]
+            }
+        )
+
     if not state.user_origin or state.user_origin.latitude is None or state.user_origin.longitude is None:
         return Command(
             update={
