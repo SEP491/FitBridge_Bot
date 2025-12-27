@@ -81,6 +81,7 @@ async def stream_graph_events(
     thread_id: str,
     graph_input: dict,
     context: Context,
+    target_node: str = "call_model",
 ) -> AsyncGenerator[str, None]:
     """Stream graph events as Server-Sent Events (SSE).
 
@@ -113,12 +114,12 @@ async def stream_graph_events(
             version="v2",
         ):
             event_type = event.get("event")
-            
-            # Only stream token-level streaming from LLM
-            if event_type == "on_chat_model_stream":
-                chunk = event.get("data", {}).get("chunk")
-                if chunk and hasattr(chunk, "content") and chunk.content is not None:
-                    yield f"event: token\ndata: {chunk.content}\n\n"
+            metadata = event.get("metadata", {})
+            if metadata.get("langgraph_node") == target_node:   
+                if event_type == "on_chat_model_stream":
+                    chunk = event.get("data", {}).get("chunk")
+                    if chunk and hasattr(chunk, "content") and chunk.content is not None:
+                        yield f"event: token\ndata: {chunk.content}\n\n"
 
         # Signal completion
         yield f"event: done\ndata: stream_complete\n\n"
