@@ -77,9 +77,17 @@ async def call_model(
     user_origin_set = state.user_origin and state.user_origin.latitude is not None and state.user_origin.longitude is not None
     
     state_summary = (
-        f"CURRENT SEARCH STATE:\n"
-        f"- User's physical location: {user_origin_location_status} {'(REQUIRED for search)' if not user_origin_set else ''}\n"
-        f"- Search area location to look for gyms/PTs: {search_center_location_status} {'(REQUIRED for search)' if not search_center_set else ''}\n"
+        f"═══════════════════════════════════════════════════════════════\n"
+        f"CURRENT SEARCH STATE - CHECK THIS BEFORE RESPONDING:\n"
+        f"═══════════════════════════════════════════════════════════════\n"
+        f"\n"
+        f"LOCATION STATUS (CRITICAL - DO NOT ASK IF ALREADY SET):\n"
+        f"- state.user_origin (User's physical location): {user_origin_location_status}\n"
+        f"  {'✓ ALREADY SET - DO NOT ask user for their location' if user_origin_set else '✗ NOT SET - You may ask user for their location'}\n"
+        f"- state.search_center (Search area): {search_center_location_status}\n"
+        f"  {'✓ ALREADY SET - DO NOT ask user where to search' if search_center_set else '✗ NOT SET - You may ask user where to search'}\n"
+        f"\n"
+        f"OTHER CRITERIA:\n"
         f"- User's training goal: {goal_status}\n"
         f"- User's gym equipment/facilities: {equipment_status}\n"
         f"- User's PT certificates: {certificates_status}\n"
@@ -88,11 +96,12 @@ async def call_model(
         f"- User's maximum price: {price_status}\n"
         f"\n"
         f"SEARCH READINESS:\n"
-        f"- Search Center Required: {'SET' if search_center_set else 'NOT SET - REQUIRED for search'}\n"
-        f"- User's physical location: {user_origin_location_status} (REQUIRED for distance calculations)\n"
-        f"- Can search gyms: {'YES' if (can_search_gym and search_center_set) else 'NO - Need search_center location AND (training goal OR equipment preferences)'}\n"
-        f"- Can search PTs: {'YES' if (can_search_pt and user_origin_set) else 'NO - Need user_origin location AND (training goal OR certificate preferences)'}\n"
+        f"- Search Center: {'✓ SET' if search_center_set else '✗ NOT SET - REQUIRED for search'}\n"
+        f"- User Origin: {'✓ SET' if user_origin_set else '✗ NOT SET - Recommended for distance calculations'}\n"
+        f"- Can search gyms: {'✓ YES' if (can_search_gym and search_center_set) else '✗ NO - Need search_center location AND (training goal OR equipment preferences)'}\n"
+        f"- Can search PTs: {'✓ YES' if (can_search_pt and user_origin_set) else '✗ NO - Need user_origin location AND (training goal OR certificate preferences)'}\n"
         f"{tool_status}"
+        f"═══════════════════════════════════════════════════════════════\n"
     )
     print(state_summary)
 

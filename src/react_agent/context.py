@@ -19,7 +19,7 @@ class Context(BaseModel):
     )
 
     model: Annotated[str, {"__template_metadata__": {"kind": "llm"}}] = Field(
-        default="openai/gpt-4o-mini",
+        default="openai/gpt-5-mini-2025-08-07",
         description="The name of the language model to use for the agent's main interactions. "
         "Should be in the form: provider/model-name."
     )
