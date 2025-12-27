@@ -4,6 +4,7 @@ This module provides a streaming endpoint for interacting with the LangGraph age
 using MemorySaver for in-memory checkpoints across conversations.
 """
 
+import json
 import logging
 from contextlib import asynccontextmanager
 from typing import AsyncGenerator, Optional
@@ -96,7 +97,8 @@ async def stream_graph_events(
     global _graph
 
     if _graph is None:
-        yield f"event: error\ndata: Graph not initialized\n\n"
+        error_data = json.dumps({"error": "Graph not initialized"})
+        yield f"event: error\ndata: {error_data}\n\n"
         return
 
     config = {
@@ -105,6 +107,10 @@ async def stream_graph_events(
         }
     }
 
+    token_count = 0
+    total_chars = 0
+    space_count = 0
+    
     try:
         # Stream events from the graph - only return model's response tokens
         async for event in _graph.astream_events(
@@ -126,25 +132,41 @@ async def stream_graph_events(
                             # Convert to string to ensure proper handling
                             content_str = str(content) if not isinstance(content, str) else content
                             
-                            # Log content for debugging (repr shows spaces clearly)
-                            # Empty strings might be space deltas, so log them too
-                            if content_str == "":
-                                logger.debug("Received empty string token (might be space delimiter)")
-                            else:
-                                logger.debug(f"Streaming token: {repr(content_str)} (length: {len(content_str)})")
+                            # Update counters
+                            token_count += 1
+                            total_chars += len(content_str)
+                            if ' ' in content_str:
+                                space_count += content_str.count(' ')
                             
-                            yield f"event: token\ndata: {content_str}\n\n"
+                            # Log what's being streamed (repr shows spaces clearly)
+                            if content_str == "":
+                                logger.info("STREAMING: empty string token (might be space delimiter)")
+                            else:
+                                logger.info(f"STREAMING: token={repr(content_str)} (length={len(content_str)}, contains_space={' ' in content_str})")
+                            
+                            # Build JSON SSE message - JSON encoding will properly handle spaces and special chars
+                            token_data = {"token": content_str}
+                            json_data = json.dumps(token_data, ensure_ascii=False)
+                            sse_message = f"event: token\ndata: {json_data}\n\n"
+                            
+                            # Log the actual SSE message being sent (for debugging)
+                            logger.debug(f"SSE message being sent: {repr(sse_message)}")
+                            
+                            yield sse_message
                         else:
                             logger.debug("Skipping token: content is None")
                     else:
                         logger.debug("Skipping: no chunk or chunk has no content attribute")
 
         # Signal completion
-        yield f"event: done\ndata: stream_complete\n\n"
+        logger.info(f"Stream completed: {token_count} tokens streamed, {total_chars} total chars, {space_count} spaces found")
+        done_data = json.dumps({"status": "complete"})
+        yield f"event: done\ndata: {done_data}\n\n"
 
     except Exception as e:
         logger.exception(f"Error streaming graph events: {e}")
-        yield f"event: error\ndata: {str(e)}\n\n"
+        error_data = json.dumps({"error": str(e)})
+        yield f"event: error\ndata: {error_data}\n\n"
 
 
 @app.get("/stream")
@@ -177,8 +199,9 @@ async def stream_chat(
     global _graph
 
     if _graph is None:
+        error_data = json.dumps({"error": "Graph not initialized"})
         return StreamingResponse(
-            iter(["event: error\ndata: Graph not initialized\n\n"]),
+            iter([f"event: error\ndata: {error_data}\n\n"]),
             media_type="text/event-stream",
         )
 
@@ -205,6 +228,8 @@ async def stream_chat(
     # Use default context
     context = Context()
 
+    logger.info(f"Starting stream for thread_id={thread_id}, message={message[:100]}...")
+    
     return StreamingResponse(
         stream_graph_events(thread_id, graph_input, context),
         media_type="text/event-stream",
