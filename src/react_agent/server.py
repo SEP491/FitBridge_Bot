@@ -118,8 +118,26 @@ async def stream_graph_events(
             if metadata.get("langgraph_node") == target_node:   
                 if event_type == "on_chat_model_stream":
                     chunk = event.get("data", {}).get("chunk")
-                    if chunk and hasattr(chunk, "content") and chunk.content is not None:
-                        yield f"event: token\ndata: {chunk.content}\n\n"
+                    if chunk and hasattr(chunk, "content"):
+                        content = chunk.content
+                        # Stream all content including empty strings (spaces may come as empty deltas)
+                        # Only skip if content is explicitly None
+                        if content is not None:
+                            # Convert to string to ensure proper handling
+                            content_str = str(content) if not isinstance(content, str) else content
+                            
+                            # Log content for debugging (repr shows spaces clearly)
+                            # Empty strings might be space deltas, so log them too
+                            if content_str == "":
+                                logger.debug("Received empty string token (might be space delimiter)")
+                            else:
+                                logger.debug(f"Streaming token: {repr(content_str)} (length: {len(content_str)})")
+                            
+                            yield f"event: token\ndata: {content_str}\n\n"
+                        else:
+                            logger.debug("Skipping token: content is None")
+                    else:
+                        logger.debug("Skipping: no chunk or chunk has no content attribute")
 
         # Signal completion
         yield f"event: done\ndata: stream_complete\n\n"
